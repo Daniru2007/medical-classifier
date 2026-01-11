@@ -6,19 +6,36 @@ datasource db {
   provider = "mysql"
 }
 
-model Course {
-  id          String   @id
-  title       String
-  description String
-  lessons     Lesson[]
+model Specialist {
+  id          String   @id @default(cuid())
+  name        String
+
+  diseaseCategories DiseaseCategory[]
 }
 
-model Lesson {
-  id       String @id
-  title    String
-  content  String
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id])
+model DiseaseCategory {
+  id           String   @id @default(cuid())
+  name         String
+  specialistId String
+  specialist   Specialist @relation(fields: [specialistId], references: [id])
 
-  @@index([courseId], map: "Lesson_courseId_fkey")
+  symptoms     DiseaseCategorySymptom[]
+}
+
+model Symptom {
+  id    String @id
+  label String
+
+  diseaseCategories DiseaseCategorySymptom[]
+}
+
+model DiseaseCategorySymptom {
+  diseaseCategoryId String
+  symptomId         String
+  weight            Int
+
+  diseaseCategory DiseaseCategory @relation(fields: [diseaseCategoryId], references: [id])
+  symptom         Symptom         @relation(fields: [symptomId], references: [id])
+
+  @@id([diseaseCategoryId, symptomId])
 }
