@@ -6,21 +6,40 @@ type CreateSpecialistBody = {
   categoryIds: string[];
 };
 
-export async function GET(req:Request){
-    const symptoms = await prisma.specialist.findMany();
-    return NextResponse.json(symptoms);
+// GET all specialists with their disease categories
+export async function GET() {
+  const specialists = await prisma.specialist.findMany({
+    include: {
+      diseaseCategories: true,
+    },
+  });
+
+  return NextResponse.json(specialists);
 }
 
-export async function POST(req:Request){
-    const body:CreateSpecialistBody = await req.json();
-    const {name, categoryIds} = body;
-    const specialist = await prisma.specialist.create({
-        data:{
-            name,
-            diseaseCategories:{
-                connect: categoryIds.map((id:string)=>({id}))
-            }
-        }
-    })
-    return Response.json(specialist)
+// Create a specialist and link disease categories
+export async function POST(req: Request) {
+  const body: CreateSpecialistBody = await req.json();
+  const { name, categoryIds } = body;
+
+  if (!name || !Array.isArray(categoryIds)) {
+    return NextResponse.json(
+      { error: "Invalid input" },
+      { status: 400 }
+    );
+  }
+
+  const specialist = await prisma.specialist.create({
+    data: {
+      name,
+      diseaseCategories: {
+        connect: categoryIds.map(id => ({ id })),
+      },
+    },
+    include: {
+      diseaseCategories: true,
+    },
+  });
+
+  return NextResponse.json(specialist);
 }

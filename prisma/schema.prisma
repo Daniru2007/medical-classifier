@@ -7,24 +7,23 @@ datasource db {
 }
 
 model Specialist {
-  id          String   @id @default(cuid())
-  name        String
+  id   String @id @default(cuid())
+  name String
 
-  diseaseCategories DiseaseCategory[]
+  diseaseCategories SpecialistDiseaseCategory[]
 }
 
 model DiseaseCategory {
-  id           String   @id @default(cuid())
-  name         String
-  specialistId String
-  specialist   Specialist @relation(fields: [specialistId], references: [id])
+  id   String @id @default(cuid())
+  name String
 
   symptoms     DiseaseCategorySymptom[]
+  specialists  SpecialistDiseaseCategory[]
 }
 
 model Symptom {
-  id    String @id
-  label String
+  id    String @id @default(cuid())
+  label String @unique
 
   diseaseCategories DiseaseCategorySymptom[]
 }
@@ -38,4 +37,14 @@ model DiseaseCategorySymptom {
   symptom         Symptom         @relation(fields: [symptomId], references: [id])
 
   @@id([diseaseCategoryId, symptomId])
+}
+
+model SpecialistDiseaseCategory {
+  specialistId      String
+  diseaseCategoryId String
+
+  specialist      Specialist      @relation(fields: [specialistId], references: [id])
+  diseaseCategory DiseaseCategory @relation(fields: [diseaseCategoryId], references: [id])
+
+  @@id([specialistId, diseaseCategoryId])
 }

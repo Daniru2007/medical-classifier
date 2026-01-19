@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 type Category = {
   id: string;
   name: string;
+  symptomCount: number;
 };
 
 export default function AddSpecialistPage() {
@@ -19,15 +20,26 @@ export default function AddSpecialistPage() {
       .then(setCategories);
   }, []);
 
-  const filtered = categories.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase())
+  const filtered = categories.filter(
+    c =>
+      c.name.toLowerCase().includes(search.toLowerCase()) &&
+      !selected.some(s => s.id === c.id)
   );
 
   const addCategory = (cat: Category) => {
-    if (!selected.find(s => s.id === cat.id)) {
-      setSelected([...selected, cat]);
-    }
+    setSelected(prev => [...prev, cat]);
   };
+
+  const removeCategory = (id: string) => {
+    setSelected(prev => prev.filter(c => c.id !== id));
+  };
+
+  const totalSymptomsCovered = selected.reduce(
+    (sum, c) => sum + c.symptomCount,
+    0
+  );
+
+  const canSubmit = name.trim().length > 0 && selected.length > 0;
 
   const submit = async () => {
     await fetch("/api/specialist", {
@@ -42,6 +54,7 @@ export default function AddSpecialistPage() {
     alert("Specialist added");
     setName("");
     setSelected([]);
+    setSearch("");
   };
 
   return (
@@ -66,7 +79,7 @@ export default function AddSpecialistPage() {
         {filtered.map(cat => (
           <li key={cat.id}>
             <button onClick={() => addCategory(cat)}>
-              {cat.name}
+              {cat.name} ({cat.symptomCount} symptoms)
             </button>
           </li>
         ))}
@@ -75,11 +88,24 @@ export default function AddSpecialistPage() {
       <h4>Selected Categories</h4>
       <ul>
         {selected.map(cat => (
-          <li key={cat.id}>{cat.name}</li>
+          <li key={cat.id}>
+            {cat.name} ({cat.symptomCount})
+            <button onClick={() => removeCategory(cat.id)}>x</button>
+          </li>
         ))}
       </ul>
 
-      <button onClick={submit}>Save Specialist</button>
+      <div>
+        <strong>Total symptom coverage:</strong> {totalSymptomsCovered}
+      </div>
+
+      {!canSubmit && (
+        <p>Please enter a name and select at least one category.</p>
+      )}
+
+      <button disabled={!canSubmit} onClick={submit}>
+        Save Specialist
+      </button>
     </div>
   );
 }
